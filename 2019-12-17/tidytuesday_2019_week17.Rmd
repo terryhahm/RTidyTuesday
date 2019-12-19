@@ -1,0 +1,53 @@
+---
+title: "tidytuesday_2019_week17"
+author: "Youngseok Hahm"
+date: "12/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Get the Data
+```{r}
+dog_moves <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_moves.csv')
+dog_travel <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_travel.csv')
+dog_descriptions <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_descriptions.csv')
+```
+
+
+```{r}
+# Call necessary library
+library(tidyverse)
+```
+
+
+# Data Cleaning
+```{r}
+# 33 observations with wrong data entry
+# data from column 26 ('photo') should be moved to right by one
+temp = dog_descriptions %>% filter(status != 'adoptable')
+head(temp[,25:28])
+
+temp[, 27:34] = temp[, 26:33]
+temp[,26] = NA
+head(temp[,25:28])
+
+# Update the original dataset
+dog_descriptions[match( temp$url, dog_descriptions$url ), ] <- temp
+```
+
+
+
+
+dog_descriptions %>% filter(status != 'adoptable') 
+
+
+adoptable <- dog_descriptions %>% filter(status == 'adoptable')
+
+
+dog_travel %>% filter(id == 44520267)
+dog_descriptions %>% filter(id == 44520267)
+
+```
