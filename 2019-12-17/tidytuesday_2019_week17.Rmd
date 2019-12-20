@@ -9,19 +9,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Call library
+```{r}
+library(tidyverse)
+```
+
+
 # Get the Data
 ```{r}
 dog_moves <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_moves.csv')
 dog_travel <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_travel.csv')
 dog_descriptions <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_descriptions.csv')
 ```
-
-
-```{r}
-# Call necessary library
-library(tidyverse)
-```
-
 
 # Data Cleaning
 ```{r}
@@ -38,16 +37,43 @@ head(temp[,25:28])
 dog_descriptions[match( temp$url, dog_descriptions$url ), ] <- temp
 ```
 
+```{r}
+dog_descriptions %>% 
+  group_by(contact_state) %>%
+  summarize(total = n()) %>%
+  top_n(20, total) %>%
+  select(contact_state) -> top_20_states
+
+# Top 20 states with most adoptable dogs available by sex
+dog_descriptions %>%
+  filter(contact_state %in% top_20_states$contact_state ) %>%
+  group_by(contact_state, sex) %>%
+  summarize(count = n()) %>%
+  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~sex)
+    
+# Top 20 states with most adoptable dogs available by age
+dog_descriptions %>%
+  filter(contact_state %in% top_20_states$contact_state ) %>%
+  group_by(contact_state, age) %>%
+  summarize(count = n()) %>%
+  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~age)
+```
 
 
+```{r}
 
-dog_descriptions %>% filter(status != 'adoptable') 
+dog_travel %>%
+  select(contact_state, found) %>%
+  mutate(located = state.name[ match(contact_state, state.abb)],
+         longitude = geoco )
+
+state.name
 
 
-adoptable <- dog_descriptions %>% filter(status == 'adoptable')
+geocode(dog_travel$found)
 
 
-dog_travel %>% filter(id == 44520267)
-dog_descriptions %>% filter(id == 44520267)
+?state.name[ match('NV', state.abb, nomatch = 1) ]
 
+?state.name
 ```
