@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Call library
 ```{r}
 library(tidyverse)
+library(gganimate)
+library(plotly)
 ```
 
 
@@ -62,18 +64,29 @@ dog_descriptions %>%
 
 ```{r}
 
-dog_travel %>%
-  select(contact_state, found) %>%
-  mutate(located = state.name[ match(contact_state, state.abb)],
-         longitude = geoco )
+scale_graph = function(x) {
+  (x - min(x))/(max(x)-min(x))
+}
 
-state.name
-
-
-geocode(dog_travel$found)
-
-
-?state.name[ match('NV', state.abb, nomatch = 1) ]
-
-?state.name
+dog_descriptions %>%
+  mutate( posted_date = str_extract(posted, "([^T]+)") ) %>%
+  select(posted_date) %>%
+  group_by(posted_date) %>%
+  summarize(count = n()) %>%
+  mutate( year = strsplit(posted_date, '-') %>% map_chr(., 1),
+          month = strsplit(posted_date, '-') %>% map_chr(., 2),
+          count = scale_graph(count)) %>%
+  filter( year == '2019' ) %>%
+  ggplot(aes(x = posted_date, y = count, fill=month )) + 
+    geom_bar(stat="identity", alpha = 0.5) +
+    ylim(-1,1) +
+    theme_minimal() +
+    theme(
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      panel.grid = element_blank(),
+      plot.margin = unit(rep(-1,4), "cm") 
+    ) +
+    coord_polar(start = 0)
+  
 ```
