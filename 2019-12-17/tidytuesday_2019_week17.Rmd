@@ -2,7 +2,9 @@
 title: "tidytuesday_2019_week17"
 author: "Youngseok Hahm"
 date: "12/16/2019"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Call library
-```{r}
+```{r library_call, message=FALSE}
 library(tidyverse)
 library(gganimate)
 library(plotly)
@@ -18,9 +20,7 @@ library(plotly)
 
 
 # Get the Data
-```{r}
-dog_moves <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_moves.csv')
-dog_travel <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_travel.csv')
+```{r data_collection, message = FALSE}
 dog_descriptions <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_descriptions.csv')
 ```
 
@@ -30,22 +30,19 @@ dog_descriptions <- readr::read_csv('https://raw.githubusercontent.com/rfordatas
 # data from column 26 ('photo') should be moved to right by one
 temp = dog_descriptions %>% filter(status != 'adoptable')
 head(temp[,25:28])
-
 temp[, 27:34] = temp[, 26:33]
 temp[,26] = NA
 head(temp[,25:28])
-
 # Update the original dataset
 dog_descriptions[match( temp$url, dog_descriptions$url ), ] <- temp
 ```
 
-```{r}
+```{r, collapse=TRUE}
 dog_descriptions %>% 
   group_by(contact_state) %>%
   summarize(total = n()) %>%
   top_n(20, total) %>%
   select(contact_state) -> top_20_states
-
 # Top 20 states with most adoptable dogs available by sex
 dog_descriptions %>%
   filter(contact_state %in% top_20_states$contact_state ) %>%
@@ -72,12 +69,10 @@ dog_descriptions %>%
 ```
 
 
-```{r}
-
+```{r, collapse=TRUE}
 scale_graph = function(x) {
   (x - min(x))/(max(x)-min(x))
 }
-
 dog_descriptions %>%
   mutate( posted_date = str_extract(posted, "([^T]+)") ) %>%
   select(posted_date) %>%
@@ -87,14 +82,12 @@ dog_descriptions %>%
           month = months(as.Date(posted_date)),
           count = scale_graph(count)) %>%
   filter( year == '2019' ) -> data_visualization
-
 data_visualization %>%
   group_by(month) %>%
   summarize(start=min(posted_date), end=max(posted_date)) %>%
   rowwise() %>%
   mutate(month_label = months(as.Date(start)),
          mid_point = as.character( as.Date(start) + floor((as.Date(end) - as.Date(start))/2))) -> data_label
-
 p <- ggplot(data = data_visualization, aes(x = posted_date, y = count, fill=month )) + 
   geom_bar(stat="identity", alpha = 0.5) +
   ylim(-0.5,1) +
@@ -106,8 +99,5 @@ p <- ggplot(data = data_visualization, aes(x = posted_date, y = count, fill=mont
   ) +
   coord_polar(start = 0) +
   geom_text(data = data_label, aes(x = mid_point, y = -0.1, label = month_label), colour = "black", alpha=0.8, size=1.4, inherit.aes = FALSE) 
-
-
 p + labs(title = "Adoptable dogs posted by month in 2019 (scaled)")
 ```
-
