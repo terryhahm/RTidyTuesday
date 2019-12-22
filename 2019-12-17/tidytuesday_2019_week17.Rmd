@@ -51,14 +51,24 @@ dog_descriptions %>%
   filter(contact_state %in% top_20_states$contact_state ) %>%
   group_by(contact_state, sex) %>%
   summarize(count = n()) %>%
-  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~sex)
+  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~sex) %>%
+  layout(
+    title = "Top 20 states with most adoptable dogs available by sex",
+    xaxis = list( title = "State abbreviation"),
+    yaxis = list( title = "Number of adoptable dogs")
+  )
     
 # Top 20 states with most adoptable dogs available by age
 dog_descriptions %>%
   filter(contact_state %in% top_20_states$contact_state ) %>%
   group_by(contact_state, age) %>%
   summarize(count = n()) %>%
-  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~age)
+  plot_ly(x = ~contact_state, y = ~count, type = "bar", color = ~age) %>%
+  layout(
+    title = "Top 20 states with most adoptable dogs available by age",
+    xaxis = list( title = "State abbreviation"),
+    yaxis = list( title = "Number of adoptable dogs")
+  )
 ```
 
 
@@ -74,19 +84,30 @@ dog_descriptions %>%
   group_by(posted_date) %>%
   summarize(count = n()) %>%
   mutate( year = strsplit(posted_date, '-') %>% map_chr(., 1),
-          month = strsplit(posted_date, '-') %>% map_chr(., 2),
+          month = months(as.Date(posted_date)),
           count = scale_graph(count)) %>%
-  filter( year == '2019' ) %>%
-  ggplot(aes(x = posted_date, y = count, fill=month )) + 
-    geom_bar(stat="identity", alpha = 0.5) +
-    ylim(-1,1) +
-    theme_minimal() +
-    theme(
-      axis.text = element_blank(),
-      axis.title = element_blank(),
-      panel.grid = element_blank(),
-      plot.margin = unit(rep(-1,4), "cm") 
-    ) +
-    coord_polar(start = 0)
-  
+  filter( year == '2019' ) -> data_visualization
+
+data_visualization %>%
+  group_by(month) %>%
+  summarize(start=min(posted_date), end=max(posted_date)) %>%
+  rowwise() %>%
+  mutate(month_label = months(as.Date(start)),
+         mid_point = as.character( as.Date(start) + floor((as.Date(end) - as.Date(start))/2))) -> data_label
+
+p <- ggplot(data = data_visualization, aes(x = posted_date, y = count, fill=month )) + 
+  geom_bar(stat="identity", alpha = 0.5) +
+  ylim(-0.5,1) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+  ) +
+  coord_polar(start = 0) +
+  geom_text(data = data_label, aes(x = mid_point, y = -0.1, label = month_label), colour = "black", alpha=0.8, size=1.4, inherit.aes = FALSE) 
+
+
+p + labs(title = "Adoptable dogs posted by month in 2019 (scaled)")
 ```
+
