@@ -53,7 +53,10 @@ dog_descriptions %>%
     title = "Top 20 states with most adoptable dogs available by sex",
     xaxis = list( title = "State abbreviation"),
     yaxis = list( title = "Number of adoptable dogs")
-  )
+  ) -> p_1
+
+api_create(p_1, filename = "tidytuesday_2019_week17_1")
+
     
 # Top 20 states with most adoptable dogs available by age
 dog_descriptions %>%
@@ -65,7 +68,9 @@ dog_descriptions %>%
     title = "Top 20 states with most adoptable dogs available by age",
     xaxis = list( title = "State abbreviation"),
     yaxis = list( title = "Number of adoptable dogs")
-  )
+  ) -> p_2
+
+api_create(p_2, filename = "tidytuesday_2019_week17_2")
 ```
 
 
