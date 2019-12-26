@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Call library
 ```{r library_call, message=FALSE}
 library(tidyverse)
-library(gganimate)
 library(plotly)
 ```
 
@@ -55,6 +54,8 @@ dog_descriptions %>%
     yaxis = list( title = "Number of adoptable dogs")
   ) -> p_1
 
+p_1
+
 api_create(p_1, filename = "tidytuesday_2019_week17_1")
 
     
@@ -69,6 +70,8 @@ dog_descriptions %>%
     xaxis = list( title = "State abbreviation"),
     yaxis = list( title = "Number of adoptable dogs")
   ) -> p_2
+
+p_2
 
 api_create(p_2, filename = "tidytuesday_2019_week17_2")
 ```
