@@ -1,0 +1,37 @@
+---
+title: "titytuesday_2019_week18"
+author: "Youngseok Hahm"
+date: "12/25/2019"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Call library
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+# Get Data 
+```{r, message=FALSE}
+christmas_songs <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-24/christmas_songs.csv")
+
+christmas_lyrics <- readr::read_tsv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-24/christmas_lyrics.tsv")
+```
+
+
+```{r}
+
+christmas_songs %>%
+  mutate( decade = year - year %% 10 ) %>%
+  group_by(decade) %>%
+  summarize( n())
+  
+
+
+```
+
