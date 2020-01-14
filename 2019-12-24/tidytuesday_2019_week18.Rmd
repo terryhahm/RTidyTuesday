@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Call library
 ```{r, message=FALSE}
 library(tidyverse)
+library(genius)
 ```
 
 # Get Data 
@@ -25,13 +26,133 @@ christmas_lyrics <- readr::read_tsv("https://raw.githubusercontent.com/rfordatas
 
 
 ```{r}
-
+# Top 10 songs that were most frequently listed on Billboard Top 100
 christmas_songs %>%
-  mutate( decade = year - year %% 10 ) %>%
-  group_by(decade) %>%
-  summarize( n())
-  
+  arrange( desc(weeks_on_chart) ) %>%
+  select( song, performer, weeks_on_chart) %>%
+  distinct() %>%
+  top_n(13, weeks_on_chart) -> top_10_most_frequently_on_billboard_songs
 
+# Bottom 10 songs that were least frequently listed on Billboard Top 100
+christmas_songs %>%
+  arrange( weeks_on_chart ) %>%
+  select( song, performer, weeks_on_chart) %>%
+  distinct() %>%
+  top_n(-13, weeks_on_chart) %>%
+  head(., 13) -> top_10_least_frequently_on_billboard_songs
+
+top_10_most_frequently_on_billboard_songs %>%
+  ggplot( aes( x = paste( song, " \nBy ", performer), y = weeks_on_chart) ) +
+    geom_bar(stat = "identity") +
+    theme( axis.text.x = element_text(angle = 45, hjust = 1) ) +
+    coord_flip()
+ 
+```
+ 
+ 
+```{r}
+
+get_lyrics = function( performer, song ) {
+  
+  tryCatch({ 
+    
+    lyrics_df = genius_lyrics( performer, song, info = 'simple') %>%
+                summarize( total_lyrics = paste(lyric, collapse = " ")) %>%
+                select( total_lyrics )
+    lyrics = lyrics_df$total_lyrics
+    return (lyrics)
+    },
+      
+    error = function(e) {
+      print(cat( paste("MY_ERROR:  ",e , 'Lyrics for ', song, ' By ', performer,
+                  ' NOT found in `genius` package')) )
+      return ( NA )
+    },
+    warning = function(w) {
+      print(cat ( paste("MY_WARNING:  ",w , '\n', 'Lyrics for ', song, ' By ', performer,
+                  ' NOT found in `genius` package')) )
+      return ( NA )
+    },
+    finally = {
+
+    }
+    
+  )
+  
+}
+
+top_10_most_frequently_on_billboard_songs %>%
+  rowwise() %>%
+  mutate( lyrics = get_lyrics( performer, song ) ) -> top_10_most_lyrics_df
+
+top_10_least_frequently_on_billboard_songs %>%
+  rowwise() %>%
+  mutate( lyrics = get_lyrics( performer, song ) ) -> top_10_least_lyrics_df
+
+get_word_frequency = function( data ) {
+  
+  
+  i = 1
+  word_freq_df = data.frame(matrix(ncol=2, nrow = 0))
+  colnames(word_freq_df) <- c(".", "Freq")
+
+  while( i < nrow(data) + 1 ) {
+    
+    if( is.na(data$lyrics[i]) ) {
+      i = i + 1
+      next
+    }
+    
+    data$lyrics[i] %>%
+      tolower() %>%
+      str_split(., " ") %>%
+      unlist() %>%
+      table() %>%
+      as.data.frame(stringAsFactors = FALSE) -> tmp_df
+    
+    word_freq_df = merge(word_freq_df, tmp_df, by.x = ".", by.y = ".", all.x=T, all.y=T)
+    word_freq_df[is.na(word_freq_df)] <- 0
+    word_freq_df$Freq =  rowSums(word_freq_df[2:3])
+    word_freq_df = word_freq_df[, -c(2,3)]
+    i = i + 1
+    
+  }
+  
+  
+  return( word_freq_df )
+  
+}
+
+
+top_10_most_word_freq_df = get_word_frequency(top_10_most_lyrics_df)
+
+top_10_most_word_freq_df %>%
+  top_n(50, Freq)
+
+top_10_least_word_freq_df = get_word_frequency(top_10_least_lyrics_df)
+
+top_10_least_word_freq_df %>%
+  top_n(50, Freq)
+
+
+```
+
+
+```{r}
+library(wordcloud2)
+
+words_without_meaning = c('a', 'an', 'the', 'and', 'i')
+
+top_10_most_word_freq_df %>%
+  subset(., !(. %in% words_without_meaning) ) %>%
+  top_n(50, Freq) %>%
+  wordcloud2(size=1.3)
+
+
+top_10_least_word_freq_df %>%
+  subset(., !(. %in% words_without_meaning) ) %>%
+  top_n(50, Freq) %>%
+  wordcloud2(size=1.3)
 
 ```
 
